@@ -65,13 +65,49 @@
   .month-label .badge{display:inline-block;margin:0!important;padding:2px 6px!important;border-radius:3px!important;font-size:9px!important;line-height:1.2;font-weight:800;text-transform:uppercase;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .month-label .time,.month-label .title{display:none!important}
   @media(max-width:550px){.day-postit-grid{grid-template-columns:1fr;padding:8px}.day-postit-grid .event{min-height:0}}
+
+.install-app {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  text-align: center;
+}
+
+.install-btn {
+  width: 100%;
+  border-color: var(--green);
+  color: var(--green);
+  transition: .2s;
+}
+
+.install-btn:hover {
+  background: #f0f7f3;
+}
+
+.install-app small {
+  display: block;
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.4;
+}
+
 </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <header class="top"><div class="brand"><h1 class="header-title">Agenda Institucional — Secretaria de Estado de Assistência Social e Direitos Humanos</h1><img class="brand-logo-header" src="logo-seasdh-cabecalho.png" alt="SEASDH — Secretaria de Estado de Assistência Social e Direitos Humanos e Governo do Acre"><div id="headerUser" hidden></div></div></header>
   <main class="app"><section class="panel"><div class="toolbar"><strong class="month-title" id="period"></strong><div class="nav"><button onclick="move(-1)" aria-label="Período anterior">‹</button><button onclick="goToday()">Hoje</button><button onclick="move(1)" aria-label="Próximo período">›</button></div><div class="views"><button data-view="month" class="active" onclick="setView('month')">Mês</button><button data-view="week" onclick="setView('week')">Semana</button><button data-view="day" onclick="setView('day')">Dia</button></div><input class="search" id="search" oninput="render()" placeholder="Filtrar por etiqueta ou evento"><button class="primary" onclick="openEvent()">+ Novo evento</button></div><div class="calendar-wrap" id="calendar"></div></section>
-  <aside class="panel side"><section class="profile"><h2>Perfil atual</h2><div class="profile-name" id="profileName"></div><p id="profileInfo"></p><button class="linkbtn" onclick="openProfile()">Editar meu perfil</button><div class="account-actions"><button class="secondary" onclick="openAccountAccess()">Acessar outra conta</button><button class="secondary" onclick="openCommonRegistration()">Cadastrar usuário comum</button></div></section><section class="filter"><h2>Histórico de auditoria</h2><label>Data inicial</label><input class="field" type="date" id="logStart" onchange="renderLogs()"><label>Data final</label><input class="field" type="date" id="logEnd" onchange="renderLogs()"><div class="history" id="logs"></div></section><div class="admin-actions" id="adminActions"><button class="secondary" onclick="openUsers()">Gerenciar usuários</button></div></aside></main>
+  <aside class="panel side"><section class="profile"><h2>Perfil atual</h2><div class="profile-name" id="profileName"></div><p id="profileInfo"></p><button class="linkbtn" onclick="openProfile()">Editar meu perfil</button><div class="account-actions"><button class="secondary" onclick="openAccountAccess()">Acessar outra conta</button><button class="secondary" onclick="openCommonRegistration()">Cadastrar usuário comum</button></div></section><section class="filter"><h2>Histórico de auditoria</h2><label>Data inicial</label><input class="field" type="date" id="logStart" onchange="renderLogs()"><label>Data final</label><input class="field" type="date" id="logEnd" onchange="renderLogs()"><div class="history" id="logs"></div></section><div class="admin-actions" id="adminActions"><button class="secondary" onclick="openUsers()">Gerenciar usuários</button></div>
+<div class="install-app">
+  <button id="installAppBtn" class="secondary install-btn" style="display:none">
+    📲 Instalar Agenda Social
+  </button>
+  <small id="installAppHint">
+    Instale a Agenda Social no seu dispositivo.
+  </small>
+</div>
+</aside></main>
   <div class="modal" id="eventModal"><div class="dialog"><div class="dialog-head"><h2 id="eventHeading">Cadastrar evento</h2><button class="close" onclick="closeModal('eventModal')">×</button></div><form onsubmit="saveEvent(event)"><div class="fields"><div><label>Responsável</label><input id="responsible" class="field" required></div><div><label>Departamento</label><input id="department" class="field" required></div><div><label>Data</label><input id="eventDate" class="field" type="date" required></div><div><label>Horário</label><input id="eventTime" class="field" type="time" required></div><div class="span2"><label>Nome do evento</label><input id="eventTitle" class="field" maxlength="200" required></div><div><label>Etiqueta / categoria</label><input id="eventTag" class="field" maxlength="50" placeholder="Ex.: Capacitação"></div><div><label>Cor da etiqueta</label><input id="eventColor" class="field" type="color" value="#0f3822"></div><div class="span2"><label>Local</label><input id="eventLocation" class="field" maxlength="200" required></div><div class="span2"><label>Descrição</label><textarea id="eventDescription" class="field" maxlength="2000"></textarea></div></div><div class="actions"><button type="button" class="danger" id="deleteEvent" onclick="removeEvent()">Excluir</button><button type="button" class="secondary" onclick="closeModal('eventModal')">Cancelar</button><button class="primary">Salvar evento</button></div></form></div></div>
   <div class="modal" id="profileModal"><div class="dialog"><div class="dialog-head"><h2>Meu perfil</h2><button class="close" onclick="closeModal('profileModal')">×</button></div><form onsubmit="saveProfile(event)"><div class="fields"><div><label>Nome</label><input id="pFirst" class="field" required></div><div><label>Sobrenome</label><input id="pLast" class="field"></div><div><label>Departamento</label><input id="pDept" class="field" required></div><div><label>Diretoria / Divisão</label><input id="pDivision" class="field"></div><div><label>Cargo</label><input id="pTitle" class="field"></div><div><label>Telefone institucional</label><input id="pPhone" class="field"></div><div class="span2"><label>E-mail</label><input id="pEmail" class="field" type="email" required></div></div><div class="actions"><button type="button" class="secondary" onclick="closeModal('profileModal')">Cancelar</button><button class="primary">Salvar perfil</button></div></form></div></div>
   <div class="modal" id="usersModal"><div class="dialog"><div class="dialog-head"><h2>Gerenciamento de usuários</h2><button class="close" onclick="closeModal('usersModal')">×</button></div><form onsubmit="addUser(event)"><div class="note">Apenas administradores podem cadastrar usuários. A gestão de credenciais deve ser feita no backend na versão conectada.</div><div class="fields"><div><label>Nome completo</label><input id="uName" class="field" required></div><div><label>E-mail</label><input id="uEmail" class="field" type="email" required></div><div><label>Departamento</label><input id="uDept" class="field" required></div><div><label>Papel</label><select id="uRole" class="field"><option value="USER">Usuário comum</option><option value="ADMIN">Administrador</option></select></div></div><div class="actions"><button class="primary">Cadastrar usuário</button></div><table class="users"><thead><tr><th>Usuário</th><th>Departamento</th><th>Papel</th><th></th></tr></thead><tbody id="usersRows"></tbody></table></form></div></div>
@@ -276,4 +312,57 @@ if ('serviceWorker' in navigator) {
   });
 }
 </script>
+<script>
+let deferredInstallPrompt = null;
+
+window.addEventListener('beforeinstallprompt', (event) => {
+  event.preventDefault();
+  deferredInstallPrompt = event;
+
+  const button = document.getElementById('installAppBtn');
+  const hint = document.getElementById('installAppHint');
+
+  if (button) {
+    button.style.display = 'block';
+  }
+
+  if (hint) {
+    hint.textContent = 'Clique para instalar a Agenda Social.';
+  }
+});
+
+document.getElementById('installAppBtn')?.addEventListener('click', async () => {
+  if (!deferredInstallPrompt) return;
+
+  deferredInstallPrompt.prompt();
+
+  const result = await deferredInstallPrompt.userChoice;
+
+  if (result.outcome === 'accepted') {
+    console.log('Agenda Social instalada.');
+  }
+
+  deferredInstallPrompt = null;
+
+  const button = document.getElementById('installAppBtn');
+
+  if (button) {
+    button.style.display = 'none';
+  }
+});
+
+window.addEventListener('appinstalled', () => {
+  const button = document.getElementById('installAppBtn');
+  const hint = document.getElementById('installAppHint');
+
+  if (button) {
+    button.style.display = 'none';
+  }
+
+  if (hint) {
+    hint.textContent = 'Agenda Social instalada neste dispositivo.';
+  }
+});
+</script>
+
 </body></html>
