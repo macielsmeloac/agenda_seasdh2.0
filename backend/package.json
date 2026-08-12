@@ -1,0 +1,8 @@
+{
+  "name": "agenda-social-seasdh-api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "API da Agenda Institucional SEASDH",
+  "scripts": { "start": "node server.js" },
+  "engines": { "node": ">=18" }
+}
