@@ -1,6 +1,12 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0f3822">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Agenda Social">
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Agenda Social | SEASDH</title>
   <style>
@@ -256,4 +262,18 @@ logoutAccount=async function(){
 /* Sessão Supabase: logout persistente e sem restauração automática ao atualizar. */
 loadSupabaseAgenda=async function(){var sessionResult=await supabaseClient.auth.getSession();var session=sessionResult.data.session;if(!session){state.sessionActive=false;localStorage.removeItem('seasdh_agenda_v2');$('authOverlay').classList.add('show');setAuthMode('login');return}var user=session.user;var profileResult=await supabaseClient.from('profiles').select('*').eq('id',user.id).single();if(profileResult.error){$('authError').textContent='Não foi possível carregar o perfil: '+profileResult.error.message;$('authOverlay').classList.add('show');return}applySupabaseProfile(profileResult.data);var eventsResult=await supabaseClient.from('events').select('*').order('event_date').order('event_time');if(eventsResult.error){alert('Não foi possível carregar eventos: '+eventsResult.error.message);return}state.events=eventsResult.data.map(supabaseEvent);var logsResult=await supabaseClient.from('audit_logs').select('*').order('created_at',{ascending:false});state.logs=(logsResult.data||[]).map(function(row){return{action:row.action==='CREATE'?'create':row.action==='UPDATE'?'edit':'delete',title:row.event_title,user:'',at:row.created_at}});persist();releaseAgenda();render()};
 logoutAccount=async function(){var result=await supabaseClient.auth.signOut({scope:'global'});if(result.error){$('authError').textContent='Não foi possível sair da conta: '+result.error.message;return}Object.keys(localStorage).filter(function(storageKey){return storageKey==='seasdh_agenda_v2'||storageKey.indexOf('sb-')===0}).forEach(function(storageKey){localStorage.removeItem(storageKey)});state.sessionActive=false;state.profile=null;state.users=[];state.events=[];state.logs=[];$('loginForm').reset();$('authOverlay').classList.add('show');setAuthMode('login')};
-</script></body></html>
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('/sw.js')
+      .then(function () {
+        console.log('Agenda Social PWA ativado.');
+      })
+      .catch(function (error) {
+        console.error('Erro ao ativar PWA:', error);
+      });
+  });
+}
+</script>
+</body></html>
