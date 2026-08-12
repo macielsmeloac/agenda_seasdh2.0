@@ -230,6 +230,26 @@ loginUser=async function(event){event.preventDefault();var email=$('loginUsernam
 saveEvent=async function(event){event.preventDefault();var payload={responsible:$('responsible').value.trim(),department:$('department').value.trim(),event_date:$('eventDate').value,event_time:$('eventTime').value,title:$('eventTitle').value.trim(),tag:$('eventTag').value.trim()||null,color:$('eventColor').value,location:$('eventLocation').value.trim(),description:$('eventDescription').value.trim()||null};var result=editing?await supabaseClient.from('events').update(payload).eq('id',editing.id).select().single():await supabaseClient.from('events').insert(payload).select().single();if(result.error){alert('Não foi possível salvar o evento: '+result.error.message);return}await loadSupabaseAgenda();closeModal('eventModal')};
 removeEvent=async function(){if(!editing||!confirm('Excluir “'+editing.title+'”?'))return;var result=await supabaseClient.from('events').delete().eq('id',editing.id);if(result.error){alert('Não foi possível excluir: '+result.error.message);return}closeModal('eventModal');await loadSupabaseAgenda()};
 saveProfile=async function(event){event.preventDefault();var payload={first_name:$('pFirst').value.trim(),last_name:$('pLast').value.trim(),department:$('pDept').value.trim(),division:$('pDivision').value.trim(),job_title:$('pTitle').value.trim(),email:$('pEmail').value.trim().toLowerCase(),phone:$('pPhone').value.trim()};var result=await supabaseClient.from('profiles').update(payload).eq('id',state.profile.id).select().single();if(result.error){alert('Não foi possível salvar o perfil: '+result.error.message);return}applySupabaseProfile(result.data);closeModal('profileModal');render()};
-logoutAccount=async function(){await supabaseClient.auth.signOut();state.sessionActive=false;persist();$('authOverlay').classList.add('show');setAuthMode('login')};
+logoutAccount=async function(){
+  const result=await supabaseClient.auth.signOut({scope:'local'});
+
+  if(result.error){
+    console.error('Erro ao sair:',result.error);
+    $('authError').textContent='Não foi possível sair da conta: '+result.error.message;
+    return;
+  }
+
+  state.sessionActive=false;
+  state.profile=null;
+  state.users=[];
+  state.events=[];
+  state.logs=[];
+
+  localStorage.removeItem('seasdh_agenda_v2');
+
+  $('loginForm').reset();
+  $('authOverlay').classList.add('show');
+  setAuthMode('login');
+};
 (function prepareSupabaseLogin(){var label=document.querySelector('#loginForm label');if(label)label.textContent='E-mail';var input=$('loginUsername');if(input){input.type='email';input.placeholder='seu.email@seasdh.ac.gov.br';input.autocomplete='email'}loadSupabaseAgenda()})();
 </script></body></html>
