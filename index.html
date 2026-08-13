@@ -365,4 +365,13 @@ window.addEventListener('appinstalled', () => {
 });
 </script>
 
+<script>
+/* Administração: carrega todos os perfis autorizados diretamente do Supabase. */
+function managedUserFromProfile(profile){return{id:profile.id,name:(profile.first_name+' '+profile.last_name).trim(),username:profile.username,email:profile.email,dept:profile.department,division:profile.division,title:profile.job_title,phone:profile.phone,role:profile.role,createdByAdmin:profile.created_by_admin,passwordPersonalized:profile.password_personalized}}
+async function loadManagedAccounts(){if(!state.profile||state.profile.role!=='ADMIN')return;var result=await supabaseClient.from('profiles').select('*').order('first_name').order('last_name');if(result.error){console.error('Não foi possível carregar contas:',result.error);var table=$('adminAccountsRows');if(table)table.innerHTML='<tr><td colspan="5">Não foi possível carregar as contas: '+esc(result.error.message)+'</td></tr>';return}state.users=result.data.map(managedUserFromProfile);persist();renderManagedAccounts()}
+var openAdminPanelWithSupabase=openAdminPanel;
+openAdminPanel=async function(){openAdminPanelWithSupabase();await loadManagedAccounts()};
+var loadSupabaseAgendaWithAccounts=loadSupabaseAgenda;
+loadSupabaseAgenda=async function(){await loadSupabaseAgendaWithAccounts();await loadManagedAccounts()};
+</script>
 </body></html>
