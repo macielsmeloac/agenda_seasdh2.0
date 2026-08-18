@@ -285,6 +285,19 @@ var supabaseClient = window.supabase.createClient(
   'sb_publishable_lpsTg5s2rJktk4v3rbyvyg_8tvRuxb6'
 );
 
+/* Cliente secundário para operações administrativas sem sobrescrever a sessão local */
+var adminAuthClient = window.supabase.createClient(
+  'https://afjvbeujvrfdmqbmrnxs.supabase.co',
+  'sb_publishable_lpsTg5s2rJktk4v3rbyvyg_8tvRuxb6',
+  {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false
+    }
+  }
+);
+
 /* Converte uma linha do banco de dados em objeto de evento */
 function supabaseEvent(row) {
   return {
@@ -498,11 +511,23 @@ signupUser = async function (event) {
 /* Login via Supabase Auth */
 loginUser = async function (event) {
   event.preventDefault();
-  var email = $('loginUsername').value.trim();
+  var loginId = $('loginUsername').value.trim().toLowerCase();
   var password = $('loginPassword').value;
+  var email = loginId;
+
+  /* Se não for um e-mail válido, tenta buscar o e-mail pelo nome de usuário via RPC */
+  if (loginId.indexOf('@') === -1) {
+    var rpcResult = await supabaseClient.rpc('get_email_by_username', { p_username: loginId });
+    if (rpcResult.error || !rpcResult.data) {
+      $('authError').textContent = 'Usuário não encontrado.';
+      return;
+    }
+    email = rpcResult.data;
+  }
+
   var result = await supabaseClient.auth.signInWithPassword({ email: email, password: password });
   if (result.error) {
-    $('authError').textContent = 'E-mail ou senha inválidos.';
+    $('authError').textContent = 'Usuário ou senha inválidos.';
     return;
   }
   await loadSupabaseAgenda();
@@ -598,12 +623,12 @@ logoutAccount = async function () {
 /* Prepara o formulário de login para usar e-mail */
 (function prepareSupabaseLogin() {
   var label = document.querySelector('#loginForm label');
-  if (label) label.textContent = 'E-mail';
+  if (label) label.textContent = 'Usuário ou E-mail';
   var input = $('loginUsername');
   if (input) {
-    input.type = 'email';
-    input.placeholder = 'seu.email@seasdh.ac.gov.br';
-    input.autocomplete = 'email';
+    input.type = 'text';
+    input.placeholder = 'Nome de usuário';
+    input.autocomplete = 'username';
   }
   setTimeout(loadSupabaseAgenda, 0);
 })();
@@ -702,7 +727,7 @@ window.createSupabaseManagedAccount = async function (event) {
   var primeiro = partes.shift() || 'Usuário';
   var restante = partes.join(' ') || 'SEASDH';
 
-  var result = await supabaseClient.auth.signUp({
+  var result = await adminAuthClient.auth.signUp({
     email: email,
     password: password,
     options: {
