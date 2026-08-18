@@ -268,7 +268,7 @@ render();
 </script><script>
 /* No mês, cada evento é apresentado somente pela etiqueta de categoria. */
 var eventCardWithMonthLabels=eventCard;
-eventCard=function(event,detail){if(detail)return eventCardWithMonthLabels(event,detail);var allowed=canEdit(event),label=event.tag||event.title;return `<button class="event month-label" style="--tag:${esc(event.color)}" ${allowed?`onclick="openEvent('${event.id}')"`:'title="Somente o criador ou administrador pode editar"'}><span class="badge" style="background:${esc(event.color)}">${esc(label)}</span></button>`;};
+eventCard=function(event,detail){if(detail)return eventCardWithMonthLabels(event,detail);var label=event.tag||event.title;return `<button class="event month-label" style="--tag:${esc(event.color)}" onclick="openEvent('${event.id}')"><span class="badge" style="background:${esc(event.color)}">${esc(label)}</span></button>`;};
 render();
 </script><script>
 /* Campos institucionais obrigatórios no cadastro de uma nova conta. */
