@@ -17,6 +17,7 @@ create table if not exists public.profiles (
   role text not null default 'USER' check (role in ('ADMIN', 'USER')),
   created_by_admin boolean not null default false,
   password_personalized boolean not null default true,
+  active boolean not null default true,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -177,6 +178,11 @@ on public.profiles for update to authenticated
 using (id = auth.uid() or public.is_admin())
 with check (id = auth.uid() or public.is_admin());
 
+drop policy if exists "profiles: admin exclui perfis" on public.profiles;
+create policy "profiles: admin exclui perfis"
+on public.profiles for delete to authenticated
+using (public.is_admin());
+
 drop policy if exists "events: leitura para usuários autenticados" on public.events;
 create policy "events: leitura para usuários autenticados"
 on public.events for select to authenticated using (true);
@@ -204,3 +210,26 @@ using (actor_id = auth.uid() or public.is_admin());
 
 -- A inserção no histórico é feita exclusivamente pelos gatilhos de eventos.
 
+-- Função segura para administradores redefinirem senha de outros usuários no Supabase Auth
+create or replace function public.admin_reset_password(target_user_id uuid, new_password text)
+returns void
+language plpgsql
+security definer set search_path = public
+as $$
+begin
+  if not public.is_admin() then
+    raise exception 'Acesso negado: apenas administradores podem redefinir senhas.';
+  end if;
+  
+  -- Atualiza a senha na tabela de autenticação interna do Supabase
+  update auth.users
+  set encrypted_password = crypt(new_password, gen_salt('bf')),
+      raw_app_meta_data = raw_app_meta_data || jsonb_build_object('password_personalized', false)
+  where id = target_user_id;
+
+  -- Atualiza o estado da senha no perfil do usuário
+  update public.profiles
+  set password_personalized = false
+  where id = target_user_id;
+end;
+$$;
