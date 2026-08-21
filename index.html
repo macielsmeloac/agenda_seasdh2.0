@@ -192,7 +192,7 @@ function importCalendarEvents(file){if(!file)return;var reader=new FileReader();
 /* Perfil administrativo local para gestão da agenda. */
 (function ensureAdministratorProfile(){var admin=state.users.find(function(user){return user.id==='me'});if(!admin){admin={id:'me'};state.users.unshift(admin)}Object.assign(admin,{name:'Administrador SEASDH',username:admin.username||'administrador',password:admin.password||'seasdh@2026',email:admin.email||'administrador@seasdh.gov.br',dept:admin.dept||'Secretaria de Assistência Social e Direitos Humanos',division:admin.division||'Administração',title:admin.title||'Administrador do Sistema',phone:admin.phone||'',role:'ADMIN'});persist()})();
 function logoutAccount(){state.sessionActive=false;persist();$('loginForm').reset();$('authOverlay').classList.add('show');setAuthMode('login')}
-(function addLogoutButton(){var actions=document.querySelector('.account-actions');if(!actions||document.getElementById('logoutButton'))return;var button=document.createElement('button');button.type='button';button.id='logoutButton';button.className='secondary';button.textContent='Sair da conta';button.onclick=logoutAccount;actions.appendChild(button)})();
+(function addLogoutButton(){var actions=document.querySelector('.account-actions');if(!actions||document.getElementById('logoutButton'))return;var button=document.createElement('button');button.type='button';button.id='logoutButton';button.className='secondary';button.textContent='Sair da conta';button.onclick=function(){ logoutAccount(); };actions.appendChild(button)})();
 </script><script>
 (function positionLogoutButton(){var profile=document.querySelector('.profile');var heading=profile&&profile.querySelector('h2');var button=document.getElementById('logoutButton');if(!profile||!heading||!button)return;var top=document.createElement('div');top.className='profile-top';profile.insertBefore(top,heading);top.appendChild(heading);button.className='linkbtn logout-discreet';top.appendChild(button)})();
 </script><script>
@@ -599,15 +599,15 @@ saveProfile = async function (event) {
 
 /* Logout com limpeza total do estado local */
 logoutAccount = async function () {
-  var result = await supabaseClient.auth.signOut({ scope: 'global' });
-  if (result.error) {
-    $('authError').textContent = 'Não foi possível sair da conta: ' + result.error.message;
-    return;
+  try {
+    await supabaseClient.auth.signOut();
+  } catch (e) {
+    console.warn("Erro ao fazer signOut remoto:", e);
   }
 
-  Object.keys(localStorage)
-    .filter(function (k) { return k === 'seasdh_agenda_v2' || k.indexOf('sb-') === 0; })
-    .forEach(function (k) { localStorage.removeItem(k); });
+  // Limpa o armazenamento local agressivamente para evitar login automático
+  localStorage.clear();
+  sessionStorage.clear();
 
   state.sessionActive = false;
   state.profile = null;
